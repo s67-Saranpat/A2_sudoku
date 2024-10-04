@@ -3,15 +3,22 @@ boolean[][] fixedCells = new boolean[9][9];
 int selectedRow = -1;
 int selectedCol = -1;
 boolean gameWon = false;
+boolean gameWrong = false;
+boolean showSolution = false;
+int buttonX = 460;
+int buttonY = 150;
+int buttonWidth = 100;
+int buttonHeight = 50;
 
 void setup() {
-  size(450, 450);
+  size(600, 450); 
   generateSudokuPuzzle();
 }
 
 void draw() {
   background(255);
   drawSudokuBoard();
+  drawSolveButton();
   
   if (selectedRow != -1 && selectedCol != -1) {
     highlightSelectedCell();
@@ -20,14 +27,24 @@ void draw() {
   drawNumbers();
   
   if (checkWin()) {
-    gameWon = true;
-    displayWinMessage();
+    if (isBoardValid()) {
+      gameWon = true;
+      displayWinMessage();
+    } else {
+      gameWrong = true;
+      displayWrongMessage();
+    }
+  }
+  
+  if (showSolution) {
+    solveSudoku(sudokuGrid); 
+    drawNumbers();
   }
 }
 
 void generateSudokuPuzzle() {
-  fillSudokuGrid(); 
-  removeNumbersForPuzzle(30); 
+  fillSudokuGrid();
+  removeNumbersForPuzzle(30);
 }
 
 void fillSudokuGrid() {
@@ -125,25 +142,25 @@ void removeNumbersForPuzzle(int numToRemove) {
 void drawSudokuBoard() {
   int cols = 9;
   int rows = 9;
-  int cellWidth = width / cols;
+  int cellWidth = (width - 150) / cols; 
   int cellHeight = height / rows;
   
   strokeWeight(1);
   stroke(0);
   for (int i = 0; i <= cols; i++) {
-    line(i * cellWidth, 0, i * cellWidth, height);
-    line(0, i * cellHeight, width, i * cellHeight);
+    line(i * cellWidth, 0, i * cellWidth, height); 
+    line(0, i * cellHeight, width - 150, i * cellHeight);
   }
   
   strokeWeight(4);
   for (int i = 0; i <= 3; i++) {
-    line(i * (cellWidth * 3), 0, i * (cellWidth * 3), height);
-    line(0, i * (cellHeight * 3), width, i * (cellHeight * 3));
+    line(i * (cellWidth * 3), 0, i * (cellWidth * 3), height); 
+    line(0, i * (cellHeight * 3), width - 150, i * (cellHeight * 3)); 
   }
 }
 
 void highlightSelectedCell() {
-  int cellWidth = width / 9;
+  int cellWidth = (width - 150) / 9;
   int cellHeight = height / 9;
   
   fill(200, 200, 255);
@@ -152,7 +169,7 @@ void highlightSelectedCell() {
 }
 
 void drawNumbers() {
-  int cellWidth = width / 9;
+  int cellWidth = (width - 150) / 9;
   int cellHeight = height / 9;
   textSize(32);
   textAlign(CENTER, CENTER);
@@ -172,17 +189,24 @@ void drawNumbers() {
 }
 
 void mousePressed() {
-  if (!gameWon) {
-    int cellWidth = width / 9;
+  if (!gameWon && !gameWrong) {
+    int cellWidth = (width - 150) / 9;
     int cellHeight = height / 9;
     
-    selectedCol = mouseX / cellWidth;
-    selectedRow = mouseY / cellHeight;
+    if (mouseX < width - 150) { 
+      selectedCol = mouseX / cellWidth;
+      selectedRow = mouseY / cellHeight;
+    }
+    
+    if (mouseX > buttonX && mouseX < buttonX + buttonWidth &&
+        mouseY > buttonY && mouseY < buttonY + buttonHeight) { 
+      showSolution = true;
+    }
   }
 }
 
 void keyPressed() {
-  if (!gameWon && !fixedCells[selectedRow][selectedCol]) {
+  if (!gameWon && !gameWrong && !fixedCells[selectedRow][selectedCol]) {
     if (key >= '1' && key <= '9') {
       sudokuGrid[selectedRow][selectedCol] = key - '0';
     } else if (key == '0' || key == DELETE || key == BACKSPACE) {
@@ -202,9 +226,40 @@ boolean checkWin() {
   return true;
 }
 
+boolean isBoardValid() {
+  for (int row = 0; row < 9; row++) {
+    for (int col = 0; col < 9; col++) {
+      int num = sudokuGrid[row][col];
+      sudokuGrid[row][col] = 0;
+      if (!isSafe(sudokuGrid, row, col, num)) {
+        sudokuGrid[row][col] = num;
+        return false;
+      }
+      sudokuGrid[row][col] = num;
+    }
+  }
+  return true;
+}
+
 void displayWinMessage() {
   fill(0, 255, 0);
   textSize(48);
   textAlign(CENTER, CENTER);
   text("You Win!", width / 2, height / 2);
+}
+
+void displayWrongMessage() {
+  fill(255, 0, 0);
+  textSize(48);
+  textAlign(CENTER, CENTER);
+  text("Something Wrong", width / 2, height / 2);
+}
+
+void drawSolveButton() {
+  fill(0, 100, 255);
+  rect(buttonX, buttonY, buttonWidth, buttonHeight);
+  fill(255);
+  textSize(20);
+  textAlign(CENTER, CENTER);
+  text("Solve", buttonX + buttonWidth / 2, buttonY + buttonHeight / 2);
 }
