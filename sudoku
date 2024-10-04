@@ -1,6 +1,7 @@
 int[][] sudokuGrid = new int[9][9];  
 int selectedRow = -1;
 int selectedCol = -1;
+boolean gameWon = false;  
 
 void setup() {
   size(450, 450); 
@@ -9,20 +10,26 @@ void setup() {
 void draw() {
   background(255);  
   
-
+  
   drawSudokuBoard(); 
   
- 
+  
   if (selectedRow != -1 && selectedCol != -1) {
     highlightSelectedCell();
   }
   
- 
+  
   drawNumbers();
+  
+  
+  if (checkWin()) {
+    gameWon = true;
+    displayWinMessage();  
+  }
 }
 
 void drawSudokuBoard() {
-  int cols = 9; 
+  int cols = 9;  
   int rows = 9;  
   int cellWidth = width / cols;
   int cellHeight = height / rows;
@@ -59,6 +66,7 @@ void drawNumbers() {
   textAlign(CENTER, CENTER);
   fill(0); 
   
+  
   for (int i = 0; i < 9; i++) {
     for (int j = 0; j < 9; j++) {
       if (sudokuGrid[i][j] != 0) {
@@ -69,19 +77,44 @@ void drawNumbers() {
 }
 
 void mousePressed() {
-  int cellWidth = width / 9;
-  int cellHeight = height / 9;
-  
-  
-  selectedCol = mouseX / cellWidth;
-  selectedRow = mouseY / cellHeight;
+  if (!gameWon) {  
+    int cellWidth = width / 9;
+    int cellHeight = height / 9;
+    
+   
+    selectedCol = mouseX / cellWidth;
+    selectedRow = mouseY / cellHeight;
+  }
 }
 
 void keyPressed() {
   
-  if (key >= '1' && key <= '9') {
-    sudokuGrid[selectedRow][selectedCol] = key - '0'; 
-  } else if (key == '0' || key == DELETE || key == BACKSPACE) {
-    sudokuGrid[selectedRow][selectedCol] = 0; 
+  if (!gameWon) {
+    
+    if (key >= '1' && key <= '9') {
+      sudokuGrid[selectedRow][selectedCol] = key - '0'; 
+    } else if (key == '0' || key == DELETE || key == BACKSPACE) {
+      sudokuGrid[selectedRow][selectedCol] = 0; 
+    }
   }
+}
+
+
+boolean checkWin() {
+  for (int i = 0; i < 9; i++) {
+    for (int j = 0; j < 9; j++) {
+      if (sudokuGrid[i][j] == 0) {
+        return false; 
+      }
+    }
+  }
+  return true;  
+}
+
+
+void displayWinMessage() {
+  fill(0, 255, 0);  
+  textSize(48);
+  textAlign(CENTER, CENTER);
+  text("You Win!", width / 2, height / 2);  
 }
