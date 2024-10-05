@@ -9,9 +9,12 @@ int buttonX = 460;
 int buttonY = 150;
 int buttonWidth = 100;
 int buttonHeight = 50;
+int textX = 460;
+int textY = 300;
+int repeatCount = 0;
 
 void setup() {
-  size(600, 450); 
+  size(600, 450);
   generateSudokuPuzzle();
 }
 
@@ -19,6 +22,7 @@ void draw() {
   background(255);
   drawSudokuBoard();
   drawSolveButton();
+  drawResetButton();
   
   if (selectedRow != -1 && selectedCol != -1) {
     highlightSelectedCell();
@@ -29,16 +33,20 @@ void draw() {
   if (checkWin()) {
     if (isBoardValid()) {
       gameWon = true;
-      displayWinMessage();
     } else {
       gameWrong = true;
-      displayWrongMessage();
     }
   }
-  
+
   if (showSolution) {
-    solveSudoku(sudokuGrid); 
+    solveSudoku(sudokuGrid);
     drawNumbers();
+  }
+
+  if (gameWon) {
+    displayWinMessage();
+  } else if (gameWrong) {
+    displayWrongMessage();
   }
 }
 
@@ -192,23 +200,43 @@ void mousePressed() {
   if (!gameWon && !gameWrong) {
     int cellWidth = (width - 150) / 9;
     int cellHeight = height / 9;
-    
-    if (mouseX < width - 150) { 
+
+    if (mouseX < width - 150) {
       selectedCol = mouseX / cellWidth;
       selectedRow = mouseY / cellHeight;
     }
-    
+
     if (mouseX > buttonX && mouseX < buttonX + buttonWidth &&
-        mouseY > buttonY && mouseY < buttonY + buttonHeight) { 
+        mouseY > buttonY && mouseY < buttonY + buttonHeight) {
       showSolution = true;
+      for (int row = 0; row < 9; row++) {
+        for (int col = 0; col < 9; col++) {
+          if (!fixedCells[row][col] && sudokuGrid[row][col] != 0) {
+            sudokuGrid[row][col] = 0;
+          }
+        }
+      }
+      solveSudoku(sudokuGrid);
+    }
+
+    if (mouseX > buttonX && mouseX < buttonX + buttonWidth &&
+        mouseY > buttonY + 70 && mouseY < buttonY + buttonHeight + 70) {
+      resetGame();
     }
   }
 }
 
 void keyPressed() {
-  if (!gameWon && !gameWrong && !fixedCells[selectedRow][selectedCol]) {
-    if (key >= '1' && key <= '9') {
-      sudokuGrid[selectedRow][selectedCol] = key - '0';
+  if (!gameWon && !gameWrong && selectedRow != -1 && selectedCol != -1 && !fixedCells[selectedRow][selectedCol]) {
+    if (key >= '1' && key <= '9') { 
+      int num = key - '0';
+      int previousValue = sudokuGrid[selectedRow][selectedCol];
+
+      sudokuGrid[selectedRow][selectedCol] = num;
+
+      if (!isSafe(sudokuGrid, selectedRow, selectedCol, num)) {
+        repeatCount++;
+      }
     } else if (key == '0' || key == DELETE || key == BACKSPACE) {
       sudokuGrid[selectedRow][selectedCol] = 0;
     }
@@ -230,36 +258,58 @@ boolean isBoardValid() {
   for (int row = 0; row < 9; row++) {
     for (int col = 0; col < 9; col++) {
       int num = sudokuGrid[row][col];
-      sudokuGrid[row][col] = 0;
-      if (!isSafe(sudokuGrid, row, col, num)) {
+      if (num != 0) {
+        sudokuGrid[row][col] = 0;
+        if (!isSafe(sudokuGrid, row, col, num)) {
+          return false;
+        }
         sudokuGrid[row][col] = num;
-        return false;
       }
-      sudokuGrid[row][col] = num;
     }
   }
   return true;
 }
 
 void displayWinMessage() {
-  fill(0, 255, 0);
-  textSize(48);
+  fill(#008000);
+  textSize(20);
   textAlign(CENTER, CENTER);
   text("You Win!", width / 2, height / 2);
 }
 
 void displayWrongMessage() {
-  fill(255, 0, 0);
-  textSize(48);
+  fill(#FF0000);
+  textSize(20);
   textAlign(CENTER, CENTER);
-  text("Something Wrong", width / 2, height / 2);
+  text("Incorrect Board!", width / 2, height / 2);
 }
 
 void drawSolveButton() {
-  fill(0, 100, 255);
+  fill(0, 150, 0);
   rect(buttonX, buttonY, buttonWidth, buttonHeight);
   fill(255);
-  textSize(20);
+  textSize(16);
   textAlign(CENTER, CENTER);
-  text("Solve", buttonX + buttonWidth / 2, buttonY + buttonHeight / 2);
+  text("Show Solution", buttonX + buttonWidth / 2, buttonY + buttonHeight / 2);
+}
+
+void drawResetButton() {
+  fill(150, 0, 0);
+  rect(buttonX, buttonY + 70, buttonWidth, buttonHeight);
+  fill(255);
+  textSize(16);
+  textAlign(CENTER, CENTER);
+  text("Reset Game", buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 70);
+}
+
+void resetGame() {
+  sudokuGrid = new int[9][9];
+  fixedCells = new boolean[9][9];
+  selectedRow = -1;
+  selectedCol = -1;
+  gameWon = false;
+  gameWrong = false;
+  showSolution = false;
+  repeatCount = 0;
+  generateSudokuPuzzle();
 }
