@@ -24,12 +24,12 @@ void draw() {
   background(255);
 
   if (gameState.equals("menu")) {
-    drawMainMenu();  
+    drawMainMenu();  // Display main menu
   } else if (gameState.equals("playing")) {
     drawSudokuBoard();
     drawSolveButton();
     drawResetButton();
-    drawSaveButton();  
+    drawSaveButton();  // Save button
 
     if (selectedRow != -1 && selectedCol != -1) {
       highlightSelectedCell();
@@ -71,7 +71,7 @@ void drawMainMenu() {
   textAlign(CENTER, CENTER);
   text("Start", width / 2, height / 2 + buttonHeight / 2);
 
-
+ 
   fill(#FFA500);
   rect(width / 2 - buttonWidth / 2, height / 2 + 70, buttonWidth, buttonHeight);
   fill(0);
@@ -84,16 +84,16 @@ void mousePressed() {
     // Start Button
     if (mouseX > width / 2 - buttonWidth / 2 && mouseX < width / 2 + buttonWidth / 2 &&
         mouseY > height / 2 && mouseY < height / 2 + buttonHeight) {
-      gameState = "playing";  // Start game
+      gameState = "playing";  
     }
 
-    // Load Button
+    
     if (mouseX > width / 2 - buttonWidth / 2 && mouseX < width / 2 + buttonWidth / 2 &&
         mouseY > height / 2 + 70 && mouseY < height / 2 + 70 + buttonHeight) {
-      
+      loadGame();  // Load saved game
     }
   } else if (gameState.equals("playing")) {
-    // Click to select Sudoku cell
+    
     int cellWidth = (width - 150) / 9;
     int cellHeight = height / 9;
 
@@ -118,7 +118,7 @@ void mousePressed() {
       solveSudoku(sudokuGrid);   
     }
 
-    
+   
     if (mouseX > buttonX && mouseX < buttonX + buttonWidth &&
         mouseY > buttonY + 70 && mouseY < buttonY + buttonHeight + 70) {
       resetGame();
@@ -127,7 +127,7 @@ void mousePressed() {
     
     if (mouseX > buttonX && mouseX < buttonX + buttonWidth &&
         mouseY > buttonY + 140 && mouseY < buttonY + buttonHeight + 140) {
-     
+      saveGame();  
     }
   }
 }
@@ -327,11 +327,11 @@ void displayWinMessage() {
   textSize(32);
   fill(0, 255, 0);
   textAlign(CENTER, CENTER);
-  text("You won!", textX, textY);
+  text("Congratulations! You won!", textX, textY);
 }
 
 void displayWrongMessage() {
-  textSize(15);
+  textSize(32);
   fill(255, 0, 0);
   textAlign(CENTER, CENTER);
   text("Incorrect Solution!", textX, textY);
@@ -379,6 +379,50 @@ int[] shuffleArray(int[] array) {
   return array;
 }
 
+void saveGame() {
+  selectOutput("Select a location to save the game:", "saveGameToFile");
+}
 
-   
-  
+void saveGameToFile(File selection) {
+  if (selection == null) {
+    println("Save operation was canceled.");
+  } else {
+    String[] saveData = new String[162]; 
+    int index = 0;
+    for (int i = 0; i < 9; i++) {
+      for (int j = 0; j < 9; j++) {
+        saveData[index] = str(sudokuGrid[i][j]);
+        saveData[index + 81] = str(fixedCells[i][j] ? 1 : 0); 
+        index++;
+      }
+    }
+    saveStrings(selection.getAbsolutePath(), saveData); 
+    println("Game saved to " + selection.getAbsolutePath());
+  }
+}
+
+void loadGame() {
+  selectInput("Select a file to load the game:", "loadGameFromFile");
+}
+
+void loadGameFromFile(File selection) {
+  if (selection == null) {
+    println("Load operation was canceled.");
+  } else {
+    String[] loadData = loadStrings(selection.getAbsolutePath());
+    if (loadData == null || loadData.length != 162) {
+      println("Invalid or corrupted save file.");
+      return;
+    }
+    int index = 0;
+    for (int i = 0; i < 9; i++) {
+      for (int j = 0; j < 9; j++) {
+        sudokuGrid[i][j] = int(loadData[index]);
+        fixedCells[i][j] = int(loadData[index + 81]) == 1; 
+        index++;
+      }
+    }
+    println("Game loaded from " + selection.getAbsolutePath());
+    gameState = "playing"; 
+  }
+}
